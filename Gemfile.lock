@@ -1,7 +1,13 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    addressable (2.3.8)
     builder (3.2.2)
+    byebug (4.0.5)
+      columnize (= 0.9.0)
+    columnize (0.9.0)
+    crack (0.4.2)
+      safe_yaml (~> 1.0.0)
     cucumber (2.0.0)
       builder (>= 2.1.2)
       cucumber-core (~> 1.1.3)
@@ -17,10 +23,30 @@ GEM
     mosquitto (0.3)
     multi_json (1.11.0)
     multi_test (0.1.2)
+    rspec (3.2.0)
+      rspec-core (~> 3.2.0)
+      rspec-expectations (~> 3.2.0)
+      rspec-mocks (~> 3.2.0)
+    rspec-core (3.2.3)
+      rspec-support (~> 3.2.0)
+    rspec-expectations (3.2.1)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.2.0)
+    rspec-mocks (3.2.1)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.2.0)
+    rspec-support (3.2.2)
+    safe_yaml (1.0.4)
+    webmock (1.21.0)
+      addressable (>= 2.3.6)
+      crack (>= 0.3.2)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
+  byebug
   cucumber
   mosquitto
+  rspec
+  webmock
