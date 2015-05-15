@@ -28,7 +28,7 @@ Given 'the reporter is run' do
 	reader.loop_start
 
 	reader.on_message do |m|
-		puts m
+		puts "Reader: relaying '#{ m.to_s }'"
 
 		uri = URI.parse("http://foo.com/")
 		http = Net::HTTP.new(uri.host, uri.port)
@@ -41,7 +41,7 @@ Given 'the reporter is run' do
 	end
 
 	reader.on_connect do |rc|
-		puts "Connected with return code #{rc}"
+		puts "Reader: Connected with return code #{rc}"
 		reader.subscribe(3, "topic", Mosquitto::AT_MOST_ONCE)
 	end
 
@@ -53,14 +53,14 @@ When 'there is an incoming result' do
 	publisher.loop_start
 
 	publisher.on_publish do |mid|
-		puts "Published #{mid}"
+		puts "Dummy Publisher: Published #{mid}"
 		publisher.disconnect
 	end
 
 	publisher.connect("localhost", 1883, 10)
 
 	publisher.on_connect do |rc|
-		puts "Connected with return code #{rc}"
+		puts "Dummy Publisher: Connected with return code #{rc}"
 		publisher.publish(nil, "topic", "test message", Mosquitto::AT_MOST_ONCE, true)
 	end
 
