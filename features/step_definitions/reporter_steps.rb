@@ -7,6 +7,7 @@ require 'json'
 
 Before do |scenario|
 	stub_request(:any, 'foo.com')
+	@pid = spawn 'mosquitto'
 end
 
 After do |scenario|
@@ -14,12 +15,6 @@ After do |scenario|
 end
 
 Given 'mosquitto is running' do
-	cmd = "mosquitto"
-	ready_phrase = "Opening ipv6 listen socket"
-	PTY.spawn(cmd) do |stdout, stdin, pid|
-		@pid = pid
-		stdout.each { |line| puts "#{cmd} " + line; break if line.include?(ready_phrase) }
-	end
 end
 
 Given 'the reporter is run' do
