@@ -5,16 +5,13 @@ require 'uri'
 require 'webmock/cucumber'
 require 'json'
 
-Before do |scenario|
+Before('@mosquitto') do |scenario|
 	stub_request(:any, 'foo.com')
 	@pid = spawn 'mosquitto'
 end
 
-After do |scenario|
+After('@mosquitto') do |scenario|
 	Process.kill('QUIT', @pid)
-end
-
-Given 'mosquitto is running' do
 end
 
 Given 'the reporter is run' do
