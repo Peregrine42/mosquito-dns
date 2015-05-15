@@ -1,0 +1,10 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    mosquitto (0.3)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  mosquitto
