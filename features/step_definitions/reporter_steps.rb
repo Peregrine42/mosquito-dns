@@ -16,6 +16,68 @@ After('@mosquitto') do |scenario|
 end
 
 Given /the reporter is pointed at (\S+)/ do |target_uri|
+	@received = []
+
+	reporter = Mosquitto::Client.new('reporter')
+	reporter.loop_start
+
+	reporter.on_message do |message|
+		puts "reporter received: #{message.to_s}"
+
+		@received << message.to_s
+		puts @received
+	end
+
+	reporter.on_connect do |rc|
+		puts "reporter connected with return code #{rc}"
+		reporter.subscribe(nil, "dns_lookup", Mosquitto::EXACTLY_ONCE)
+	end
+
+	reporter.on_subscribe do |mid, qos|
+		puts "reporter subscribed with mid #{mid} and qos #{qos}"
+	end
+
+	reporter.connect("localhost", 1883, 1000)
+end
+
+Given /there are some incoming results/ do
+	publisher = Mosquitto::Client.new("publisher")
+	publisher.loop_start
+
+	publisher.on_publish do |mid|
+		puts "publisher published #{mid}"
+	end
+
+	publisher.connect("localhost", 1883, 1000)
+
+	publisher.on_connect do |rc|
+		puts "publisher connected with return code #{rc}"
+		publisher.publish(nil, "dns_lookup", "test message", Mosquitto::EXACTLY_ONCE, false)
+		publisher.publish(nil, "dns_lookup", "test message 2", Mosquitto::EXACTLY_ONCE, false)
+		publisher.publish(nil, "dns_lookup", "test message 3", Mosquitto::EXACTLY_ONCE, false)
+		puts "publisher sent test messages"
+	end
+end
+
+def buffered
+	@received
+end
+
+def ready
+	buffered.sort == ["test message", "test message 2", "test message 3"]
+end
+
+When /the timer runs down/ do
+	Timeout::timeout(5) do
+		while not ready do end
+	end
+end
+
+Then /a report is posted to (\S+) as json/ do |target_uri|
+
+end
+
+Given /old the reporter is pointed at (\S+)/ do |target_uri|
 	@done = []
 	reader = Mosquitto::Client.new("reporter")
 	reader.loop_start
@@ -79,7 +141,7 @@ When 'there is an incoming result' do
 	}
 end
 
-Then /a report is posted to (\S+) as json/ do |target_uri|
+Then /old a report is posted to (\S+) as json/ do |target_uri|
 	uri = URI.parse(target_uri)
 	expected_report = {
 		'dns_lookups' => {
