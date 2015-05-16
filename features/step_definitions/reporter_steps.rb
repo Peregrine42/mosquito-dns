@@ -17,6 +17,7 @@ end
 
 Given /the reporter is pointed at (\S+)/ do |target_uri|
 	@received = []
+	@target_uri = target_uri
 
 	reporter = Mosquitto::Client.new('reporter')
 	reporter.loop_start
@@ -24,8 +25,7 @@ Given /the reporter is pointed at (\S+)/ do |target_uri|
 	reporter.on_message do |message|
 		puts "reporter received: #{message.to_s}"
 
-		@received << message.to_s
-		puts @received
+		@received << JSON.parse(message.to_s)
 	end
 
 	reporter.on_connect do |rc|
@@ -52,105 +52,75 @@ Given /there are some incoming results/ do
 
 	publisher.on_connect do |rc|
 		puts "publisher connected with return code #{rc}"
-		publisher.publish(nil, "dns_lookup", "test message", Mosquitto::EXACTLY_ONCE, false)
-		publisher.publish(nil, "dns_lookup", "test message 2", Mosquitto::EXACTLY_ONCE, false)
-		publisher.publish(nil, "dns_lookup", "test message 3", Mosquitto::EXACTLY_ONCE, false)
+
+		message_1 = {
+			'server' => '1.1.1.1',
+			'hostname' => 'www.google.com',
+			'ip_address' => '9.9.9.9'
+		}.to_json
+
+		message_2 = {
+			'server' => '1.1.1.2',
+			'hostname' => 'www.google.com',
+			'ip_address' => ''
+		}.to_json
+
+		publisher.publish(nil, 'dns_lookup', message_1, Mosquitto::EXACTLY_ONCE, false)
+		publisher.publish(nil, 'dns_lookup', message_2, Mosquitto::EXACTLY_ONCE, false)
 		puts "publisher sent test messages"
 	end
 end
 
-def buffered
+def consolidated buffer
+	{ 'dns_lookups' => buffer }
+end
+
+def buffer
 	@received
 end
 
 def ready
-	buffered.sort == ["test message", "test message 2", "test message 3"]
+	buffer.size == 2
+end
+
+def nothing
+end
+
+def post_over_http some_json, target_uri
+	uri = URI.parse("http://" + target_uri)
+	http = Net::HTTP.new(uri.host, uri.port)
+	request = Net::HTTP::Post.new(uri.request_uri)
+	request.body = some_json
+	request["Content-Type"] = "application/json"
+	response = http.request(request)
+end
+
+def report target_uri
+	post_over_http consolidated(buffer), target_uri
 end
 
 When /the timer runs down/ do
 	Timeout::timeout(5) do
-		while not ready do end
+		while not ready do
+			nothing
+		end
+		report @target_uri
 	end
 end
 
 Then /a report is posted to (\S+) as json/ do |target_uri|
+	expected_report = { 
+		'dns_lookups' => [
+			{ 'server' => '1.1.1.1',
+				'hostname' => 'www.google.com',
+				'ip_address' => '9.9.9.9' },
 
-end
-
-Given /old the reporter is pointed at (\S+)/ do |target_uri|
-	@done = []
-	reader = Mosquitto::Client.new("reporter")
-	reader.loop_start
-
-	reader.on_message do |m|
-		puts "Reader: relaying '#{ m.to_s }'"
-
-		uri = URI.parse("http://" + target_uri)
-		http = Net::HTTP.new(uri.host, uri.port)
-		request = Net::HTTP::Post.new(uri.request_uri)
-		request.body = { "dns_lookup" => m.to_s }
-		request["Content-Type"] = "application/json"
-		response = http.request(request)
-
-		@done << m.to_s
-	end
-
-
-	reader.on_connect do |rc|
-		puts "Reader: Connected with return code #{rc}"
-	end
-
-	reader.on_subscribe do |mid, qos|
-		puts "subscribed with mid #{mid} and qos #{qos}"
-	end
-
-	reader.connect("localhost", 1883, 1000)
-
-	@reader_ready = false
-	reader.on_connect do |rc|
-		@reader_ready = true
-	end
-
-	Timeout::timeout(3) {
-		while not @reader_ready do
-		end
-		reader.subscribe(nil, "dns_lookup", Mosquitto::EXACTLY_ONCE)
+			{ 'server' => '1.1.1.2',
+				'hostname' => 'www.google.com',
+				'ip_address' => '' }
+		]
 	}
-end
-
-When 'there is an incoming result' do
-	publisher = Mosquitto::Client.new("publisher")
-	publisher.loop_start
-
-	publisher.on_publish do |mid|
-		puts "Dummy Publisher: Published #{mid}"
-	end
-
-	publisher.connect("localhost", 1883, 1000)
-
-	publisher.on_connect do |rc|
-		puts "Dummy Publisher: Connected with return code #{rc}"
-		publisher.publish(nil, "dns_lookup", "test message", Mosquitto::EXACTLY_ONCE, false)
-		publisher.publish(nil, "dns_lookup", "test message 2", Mosquitto::EXACTLY_ONCE, false)
-		publisher.publish(nil, "dns_lookup", "test message 3", Mosquitto::EXACTLY_ONCE, false)
-	end
-
-	Timeout::timeout(7) {
-		while not @done.sort == ["test message", "test message 2", "test message 3"] do
-		end
-	}
-end
-
-Then /old a report is posted to (\S+) as json/ do |target_uri|
-	uri = URI.parse(target_uri)
-	expected_report = {
-		'dns_lookups' => {
-			'1.1.1.1' => true,
-			'1.1.1.2' => true,
-			'1.1.1.3' => false
-		}
-	}
-	expect(a_request(:post, uri).with { |req| req.body.values.include? "test message" }).to have_been_made.once
-	expect(a_request(:post, uri).with { |req| req.body.values.include? "test message 2" }).to have_been_made.once
-	expect(a_request(:post, uri).with { |req| req.body.values.include? "test message 3" }).to have_been_made.once
+	expect(a_request(:post, target_uri).with { |req| 
+		req.body.eql? expected_report 
+	}).to have_been_made.once
 end
