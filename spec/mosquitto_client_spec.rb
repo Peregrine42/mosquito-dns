@@ -1,37 +1,39 @@
 require 'mosquitto'
 require './mosquitto_client'
 
-class DummyMQ
-
-	def initialize
-		@connect_block = :no_connect_block_set
-	end
+class DummyMosquitto
+	attr_reader :message_id, :channel, :qos
 	
+	def initialize
+		@connection = :no_connection_set
+	end
+
 	def on_connect &block
 		@connect_block = block
 	end
 
-	def loop_start
-	end
-
 	def connect host, port, timeout
-		@connect_block.call message_id
+		@connection = :a_connection
+		random_message_id = 5
+		@connect_block.call random_message_id
 	end
 
-	def subscribe mid, channel, qos
-	end
-
-	private
-	def message_id
-		5
+	def subscribe *args
+		@message_id, @channel, @qos = *args
+		raise 'no connection set' unless @connection == :a_connection
 	end
 end
 
 describe MosquittoClient do
-
 	it 'can start consuming from a queue' do
-		mq = DummyMQ.new
+		mq = DummyMosquitto.new
+		allow(mq).to receive(:loop_start)
 		client = MosquittoClient.new 'dns_lookups', mq
-		client.listen
+
+		expect { client.listen }.to_not raise_error
+		expect(mq).to have_received(:loop_start)
+		expect(mq.message_id).to eq nil
+		expect(mq.channel).to eq 'dns_lookups'
+		expect(mq.qos).to eq Mosquitto::EXACTLY_ONCE
 	end
 end
