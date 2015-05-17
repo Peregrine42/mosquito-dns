@@ -5,6 +5,8 @@ require 'uri'
 require 'webmock/cucumber'
 require 'json'
 
+require './reporter'
+
 Before('@mosquitto') do |scenario|
 	stub_request(:any, 'foo.com')
 	#@pid = spawn 'echo "log_dest none" | mosquitto -c /dev/stdin'
@@ -16,28 +18,8 @@ After('@mosquitto') do |scenario|
 end
 
 Given /the reporter is pointed at (\S+)/ do |target_uri|
-	@received = []
-	@target_uri = target_uri
-
-	reporter = Mosquitto::Client.new('reporter')
-	reporter.loop_start
-
-	reporter.on_message do |message|
-		puts "reporter received: #{message.to_s}"
-
-		@received << JSON.parse(message.to_s)
-	end
-
-	reporter.on_connect do |rc|
-		puts "reporter connected with return code #{rc}"
-		reporter.subscribe(nil, "dns_lookup", Mosquitto::EXACTLY_ONCE)
-	end
-
-	reporter.on_subscribe do |mid, qos|
-		puts "reporter subscribed with mid #{mid} and qos #{qos}"
-	end
-
-	reporter.connect("localhost", 1883, 1000)
+	@reporter = Reporter.new(to: target_uri)
+	@reporter.listen
 end
 
 Given /there are some incoming results/ do
@@ -104,7 +86,7 @@ When /the timer runs down/ do
 		while not ready do
 			nothing
 		end
-		report @target_uri
+		@reporter.post
 	end
 end
 
