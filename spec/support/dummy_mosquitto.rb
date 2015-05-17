@@ -3,6 +3,8 @@ class DummyMosquitto
 	
 	def initialize
 		@connection = :no_connection_set
+		@connect_block = :no_connect_block_set
+		@message_block = :no_message_block_set
 	end
 
 	def on_connect &block
@@ -18,6 +20,17 @@ class DummyMosquitto
 	def subscribe *args
 		@last_message_id, @last_channel, @last_qos = *args
 		raise 'no connection set' unless @connection == :a_connection
+	end
+
+	def on_message &block
+		@message_block = block
+	end
+
+	def publish_fake_message message
+		@message_block.call message
+	end
+
+	def loop_start
 	end
 end
 

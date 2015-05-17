@@ -14,4 +14,18 @@ describe MosquittoClient do
 		expect(mq.last_channel).to eq 'dns_lookups'
 		expect(mq.last_qos).to eq Mosquitto::EXACTLY_ONCE
 	end
+
+	it 'passes messages to a handler' do
+		mq = DummyMosquitto.new
+		handler = double(:handler)
+		allow(handler).to receive(:on_message)
+		message = double(:message)
+		client = MosquittoClient.new 'dns_lookups', mq, handler
+		client.listen
+
+		mq.publish_fake_message message
+
+		expect(handler).to have_received(:on_message)
+			.with(message)
+	end
 end
