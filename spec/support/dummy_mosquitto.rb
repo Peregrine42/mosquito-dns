@@ -1,14 +1,10 @@
 class DummyMosquitto
 	attr_reader :last_message_id, :last_channel, :last_qos
-	
+
 	def initialize
 		@connection = :no_connection_set
 		@connect_block = :no_connect_block_set
 		@message_block = :no_message_block_set
-	end
-
-	def on_connect &block
-		@connect_block = block
 	end
 
 	def connect host, port, timeout
@@ -31,6 +27,22 @@ class DummyMosquitto
 	end
 
 	def loop_start
+	end
+
+	def on_message &block
+		@message_block = block
+	end
+
+	def on_subscribe &block
+		@subscribe_block = block
+	end
+
+	def on_connect &block
+		@connect_block = block
+	end
+
+	def publish_fake_message message
+		@message_block.call message
 	end
 end
 

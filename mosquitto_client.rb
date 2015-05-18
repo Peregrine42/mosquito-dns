@@ -1,7 +1,7 @@
 require 'mosquitto'
 
 class MosquittoClient
-	def initialize channel, mosquitto=:no_mq_set, handler=:no_hander_set
+	def initialize channel, mosquitto: :no_mq_set, handler: :no_handler_set
 		@channel = channel
 		@mosquitto = mosquitto
 		@handler = handler

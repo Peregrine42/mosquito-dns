@@ -18,7 +18,8 @@ After('@mosquitto') do |scenario|
 end
 
 Given /the reporter is pointed at (\S+)/ do |target_uri|
-	@reporter = Reporter.new(to: target_uri)
+	buffer = MessageBuffer.new from: MosquittoClient.new
+	@reporter = Reporter.new(to: target_uri, from: buffer)
 	@reporter.listen
 end
 
@@ -68,18 +69,6 @@ end
 def nothing
 end
 
-def post_over_http some_json, target_uri
-	uri = URI.parse("http://" + target_uri)
-	http = Net::HTTP.new(uri.host, uri.port)
-	request = Net::HTTP::Post.new(uri.request_uri)
-	request.body = some_json
-	request["Content-Type"] = "application/json"
-	response = http.request(request)
-end
-
-def report target_uri
-	post_over_http consolidated(buffer), target_uri
-end
 
 When /the timer runs down/ do
 	Timeout::timeout(5) do
