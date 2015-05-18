@@ -6,7 +6,7 @@ describe MessageBuffer do
 		reporter = MessageBuffer.new
 		dummy_mq = MosquittoClient.new 'a_channel', handler: reporter
 		dummy_mq.on_message 'hi!'
-		expect(reporter.buffer).to eq ['hi!']
+		expect(reporter.peek).to eq ['hi!']
 	end
 
 	it 'can pop all buffered messages' do
@@ -15,7 +15,7 @@ describe MessageBuffer do
 		dummy_mq.on_message 'hi!'
 		dummy_mq.on_message 'there!'
 		expect(reporter.pop_all).to eq ['hi!', 'there!']
-		expect(reporter.buffer).to eq []
+		expect(reporter.peek).to eq []
 	end
 
 end
