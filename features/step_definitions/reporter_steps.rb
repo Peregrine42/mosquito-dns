@@ -18,9 +18,10 @@ After('@mosquitto') do |scenario|
 end
 
 Given /the reporter is pointed at (\S+)/ do |target_uri|
-	buffer = MessageBuffer.new from: MosquittoClient.new
-	@reporter = Reporter.new(to: target_uri, from: buffer)
-	@reporter.listen
+	@message_buffer = MessageBuffer.new
+	@client = MosquittoClient.new 'dns_lookups', mosquitto: Mosquitto::Client.new('reporter'), handler: @message_buffer
+	@reporter = Reporter.new(to: target_uri, from: @message_buffer)
+	@client.listen
 end
 
 Given /there are some incoming results/ do
@@ -48,22 +49,14 @@ Given /there are some incoming results/ do
 			'ip_address' => ''
 		}.to_json
 
-		publisher.publish(nil, 'dns_lookup', message_1, Mosquitto::EXACTLY_ONCE, false)
-		publisher.publish(nil, 'dns_lookup', message_2, Mosquitto::EXACTLY_ONCE, false)
+		publisher.publish(nil, 'dns_lookups', message_1, Mosquitto::EXACTLY_ONCE, false)
+		publisher.publish(nil, 'dns_lookups', message_2, Mosquitto::EXACTLY_ONCE, false)
 		puts "publisher sent test messages"
 	end
 end
 
-def consolidated buffer
-	{ 'dns_lookups' => buffer }
-end
-
-def buffer
-	@received
-end
-
 def ready
-	buffer.size == 2
+	@message_buffer.peek.size == 2
 end
 
 def nothing
@@ -92,6 +85,6 @@ Then /a report is posted to (\S+) as json/ do |target_uri|
 		]
 	}
 	expect(a_request(:post, target_uri).with { |req| 
-		req.body.eql? expected_report 
+		JSON.parse(req.body).eql? expected_report
 	}).to have_been_made.once
 end

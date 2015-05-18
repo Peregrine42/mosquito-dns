@@ -7,12 +7,12 @@ class Reporter
 		@buffer = from
 	end
 
-	def listen
-		@buffer.listen
+	def post
+		post_over_http consolidated(report), @host
 	end
 
-	def post
-		post_over_http consolidated(report), target_uri
+	def consolidated report
+		{ 'dns_lookups' => report }.to_json
 	end
 
 	def post_over_http some_json, target_uri
@@ -26,5 +26,7 @@ class Reporter
 
 	def report
 		@buffer.pop_all
+			.map { |message| JSON.parse(message.to_s) }
+			.sort { |m1, m2| m1['server'] <=> m2['server'] }
 	end
 end

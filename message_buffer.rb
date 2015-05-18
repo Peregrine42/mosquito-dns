@@ -1,8 +1,5 @@
-require 'json'
-
 class MessageBuffer
-	def initialize from: :message_queue_not_set
-		@mq_client = from
+	def initialize
 		@received = []
 	end
 
@@ -16,11 +13,7 @@ class MessageBuffer
 		result
 	end
 
-	def buffer
+	def peek
 		@received
-	end
-
-	def listen
-		@mq_client.listen
 	end
 end
