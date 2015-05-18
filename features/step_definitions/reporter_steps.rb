@@ -60,7 +60,6 @@ end
 def nothing
 end
 
-
 When /the timer runs down/ do
 	Timeout::timeout(5) do
 		while not ready do

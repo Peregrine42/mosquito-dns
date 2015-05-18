@@ -6,8 +6,8 @@ class Reporter
 
 	def initialize channel: :no_channel_set, target_uri: :no_uri_set
 		@buffer = MessageBuffer.new
-		@transmitter = Transmitter.new(to: target_uri, from: @buffer)
 		@client = MosquittoClient.new(name: 'reporter', channel: channel, handler: @buffer)
+		@transmitter = Transmitter.new(to: target_uri)
 	end
 
 	def listen
@@ -15,6 +15,6 @@ class Reporter
 	end
 
 	def post
-		@transmitter.post
+		@transmitter.post @buffer.pop_all
 	end
 end

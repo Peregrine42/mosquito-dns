@@ -1,13 +1,15 @@
+require 'json'
+require 'uri'
+require 'net/http'
 require './mosquitto_client'
 require './message_buffer'
 
 class Transmitter
-	def initialize to: :no_host_set, from: :no_buffer_set
+	def initialize to: :no_host_set
 		@host = to
-		@buffer = from
 	end
 
-	def post
+	def post report
 		post_over_http consolidated(report), @host
 	end
 
