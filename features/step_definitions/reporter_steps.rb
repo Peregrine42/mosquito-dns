@@ -18,10 +18,8 @@ After('@mosquitto') do |scenario|
 end
 
 Given /the reporter is pointed at (\S+)/ do |target_uri|
-	@message_buffer = MessageBuffer.new
-	@client = MosquittoClient.new 'dns_lookups', mosquitto: Mosquitto::Client.new('reporter'), handler: @message_buffer
-	@reporter = Reporter.new(to: target_uri, from: @message_buffer)
-	@client.listen
+	@reporter = Reporter.new channel: 'dns_lookups', target_uri: target_uri
+	@reporter.listen
 end
 
 Given /there are some incoming results/ do
@@ -56,7 +54,7 @@ Given /there are some incoming results/ do
 end
 
 def ready
-	@message_buffer.peek.size == 2
+	@reporter.buffer.peek.size == 2
 end
 
 def nothing

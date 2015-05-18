@@ -5,7 +5,7 @@ require './spec/support/dummy_mosquitto'
 describe MosquittoClient do
 	it 'can start consuming from a queue' do
 		mq = DummyMosquitto.new
-		client = MosquittoClient.new 'dns_lookups', mosquitto: mq
+		client = MosquittoClient.new channel: 'dns_lookups', mosquitto: mq
 		allow(mq).to receive(:loop_start)
 
 		expect { client.listen }.to_not raise_error
@@ -20,7 +20,7 @@ describe MosquittoClient do
 		handler = double(:handler)
 		allow(handler).to receive(:on_message)
 		message = double(:message)
-		client = MosquittoClient.new 'dns_lookups', mosquitto: mq, handler: handler
+		client = MosquittoClient.new channel: 'dns_lookups', mosquitto: mq, handler: handler
 		client.listen
 
 		mq.publish_fake_message message
