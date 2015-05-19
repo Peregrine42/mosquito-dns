@@ -1,3 +1,5 @@
+require 'json'
+
 class DNSPolicy
 	def name
 		'dns-lookups'
