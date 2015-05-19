@@ -6,6 +6,7 @@ require 'webmock/cucumber'
 require 'json'
 
 require './reporter'
+require './dns_policy'
 
 Before('@mosquitto') do |scenario|
 	stub_request(:any, 'foo.com')
@@ -17,43 +18,9 @@ After('@mosquitto') do |scenario|
 	Process.kill('QUIT', @pid)
 end
 
-class DNSPolicy
-	def name
-		'dns-lookups'
-	end
-
-	def apply messages
-		messages.map { |m|
-			JSON.parse(m)
-		}.sort { |m1, m2| m1['server'] <=> m2['server'] }
-	end
-end
-
-class Channel
-	attr_accessor :buffer, :client
-
-	def initialize buffer: :no_buffer_set, client: :no_client_set, policy: :no_policy_set
-		@buffer = buffer
-		@client = client
-		@policy = policy
-	end
-
-	def listen
-		@client.listen
-	end
-
-	def pop_all
-		@policy.apply(@buffer.pop_all.map(&:to_s))
-	end
-
-	def name
-		@policy.name
-	end
-end
-
 Given /the reporter is pointed at (\S+)/ do |target_uri|
 	@reporter = Reporter.new(
-	  channels: [ Channel.new(policy: DNSPolicy.new) ],
+	  policies: [ DNSPolicy.new ],
 		target_uri: target_uri)
 	@reporter.listen
 end

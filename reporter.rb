@@ -1,21 +1,20 @@
 require './message_buffer'
 require './transmitter'
+require './channel'
 
 class Reporter
 	attr_reader :channels
 
-	def initialize channels: [], target_uri: :no_uri_set
-		channels.each { |channel|
+	def initialize policies: [], target_uri: :no_uri_set
+		@channels = policies.map { |policy|
 			buffer = MessageBuffer.new
 			client = MosquittoClient.new(
-				name: "#{channel.name}-receiver",
-				channel: channel.name,
+				name: "#{policy.name}-receiver",
+				channel: policy.name,
 				handler: buffer
 			)
-			channel.client = client
-			channel.buffer = buffer
+			Channel.new(buffer: buffer, client: client, policy: policy)
 		}
-		@channels = channels
 		@transmitter = Transmitter.new(to: target_uri)
 	end
 
