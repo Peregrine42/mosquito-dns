@@ -15,6 +15,12 @@ class Reporter
 	end
 
 	def post
-		@transmitter.post @buffer.pop_all
+		@transmitter.post report(@buffer.pop_all)
+	end
+
+	def report messages
+		messages
+			.map { |message| JSON.parse(message.to_s) }
+			.sort { |m1, m2| m1['server'] <=> m2['server'] }
 	end
 end
