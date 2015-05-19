@@ -15,12 +15,15 @@ class Reporter
 	end
 
 	def post
-		@transmitter.post report(@buffer.pop_all)
+		@transmitter.post dns(report(@buffer.pop_all))
 	end
 
 	def report messages
-		messages
-			.map { |message| JSON.parse(message.to_s) }
-			.sort { |m1, m2| m1['server'] <=> m2['server'] }
+		messages.map { |message| JSON.parse(message.to_s) }
+	end
+
+	def dns report
+		dns_report = report.sort { |m1, m2| m1['server'] <=> m2['server'] }
+		{ 'dns_lookups' => dns_report }.to_json
 	end
 end

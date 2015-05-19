@@ -10,11 +10,7 @@ class Transmitter
 	end
 
 	def post report
-		post_over_http consolidated(report), @host
-	end
-
-	def consolidated report
-		{ 'dns_lookups' => report }.to_json
+		post_over_http report, @host
 	end
 
 	def post_over_http some_json, target_uri
