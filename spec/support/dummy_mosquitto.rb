@@ -44,5 +44,9 @@ class DummyMosquitto
 	def publish_fake_message message
 		@message_block.call message
 	end
+
+	def publish *args
+		@last_published = *args
+	end
 end
 

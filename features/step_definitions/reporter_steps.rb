@@ -8,17 +8,8 @@ require 'json'
 require './reporter'
 require './dns_policy'
 
-Before('@mosquitto') do |scenario|
-	stub_request(:any, 'foo.com')
-	#@pid = spawn 'echo "log_dest none" | mosquitto -c /dev/stdin'
-	@pid = spawn 'mosquitto'
-end
-
-After('@mosquitto') do |scenario|
-	Process.kill('QUIT', @pid)
-end
-
 Given /the reporter is pointed at (\S+)/ do |target_uri|
+	stub_request(:any, target_uri)
 	@reporter = Reporter.new(
 	  policies: [ DNSPolicy.new ],
 		target_uri: target_uri)
