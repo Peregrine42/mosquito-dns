@@ -9,7 +9,7 @@ reporter.listen
 distributor = Distributor.new
 
 while true do
-	sleep 5
 	response = reporter.post
-	distributor.send response
+	distributor.post response
+	sleep 5
 end
