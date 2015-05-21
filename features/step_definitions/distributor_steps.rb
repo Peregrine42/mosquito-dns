@@ -3,13 +3,14 @@ require './distributor'
 Given 'there are two receivers waiting for config updates' do
 	channels = ['dns-lookups', 'foo-lookups']
 	@buffers = channels.map { MessageBuffer.new }
-	channels.zip(@buffers).each do |channel, buffer|
+	@clients = channels.zip(@buffers).map do |channel, buffer|
 			client = MosquittoClient.new(
 				name: "#{channel}-receiver",
 				channel: "#{channel}-config",
 				handler: buffer
 			)
 			client.listen
+			client
 	end
 end
 
@@ -49,4 +50,5 @@ Then 'each receiver gets config updates' do
 
 	expected_foo_response = @response['foo-lookups']
 	expect(@buffers[1].peek()[0].to_s).to eq expected_foo_response.to_json
+
 end

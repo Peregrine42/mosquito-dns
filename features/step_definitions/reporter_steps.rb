@@ -15,6 +15,7 @@ Given /the reporter is pointed at (\S+)/ do |target_uri|
 		target_uri: target_uri
 	)
 	@reporter.listen
+	@clients = [ @reporter ]
 end
 
 Given /there are some incoming results/ do

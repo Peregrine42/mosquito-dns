@@ -25,4 +25,9 @@ class MosquittoClient
 	def on_message message
 		@handler.on_message message
 	end
+
+	def disconnect
+		@mosquitto.disconnect
+		@mosquitto.loop_stop(true)
+	end
 end

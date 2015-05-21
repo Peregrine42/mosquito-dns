@@ -22,6 +22,10 @@ class Reporter
 		@channels.each(&:listen)
 	end
 
+	def disconnect
+		@channels.each(&:disconnect)
+	end
+
 	def post
 		message = @channels.each_with_object({}) { |channel, result|
 			result[channel.name] = channel.pop_all

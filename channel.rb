@@ -18,5 +18,9 @@ class Channel
 	def name
 		@policy.name
 	end
+
+	def disconnect
+		@client.disconnect
+	end
 end
 

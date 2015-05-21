@@ -4,6 +4,7 @@ Before('@mosquitto') do |scenario|
 end
 
 After('@mosquitto') do |scenario|
+	@clients.each { |c| c.disconnect }
 	Process.kill('QUIT', @pid)
 	Process.wait
 end
