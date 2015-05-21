@@ -1,24 +1,25 @@
 require 'mosquitto'
+require 'json'
 
 class Distributor
-	def initialize channel: :no_channel_set, mosquitto: :no_mosquitto_set
-		@channel = channel
+	def initialize mosquitto: :no_mosquitto_set
 		@publisher = mosquitto
-		@publisher = Mosquitto::Client.new("publisher") if @publisher == :no_mosquitto_set
-		@publisher.loop_start
+		@publisher = Mosquitto::Client.new("config-distributor") if @publisher == :no_mosquitto_set
 	end
 
 	def post message
-		split_message = JSON.parse(message)['dns-lookups'].to_json
+		@publisher.loop_start
+		hash = JSON.parse(message)
+		messages_to_distribute = hash.map do |label, content|
+			content.to_json
+		end
 		@publisher.on_connect do |rc|
-			@publisher.publish(nil, channel, split_message, Mosquitto::EXACTLY_ONCE, false)
+			messages_to_distribute.zip(hash.keys).each do |content, label|
+				channel = "#{label}-config"
+				@publisher.publish(nil, channel, content, Mosquitto::EXACTLY_ONCE, false)
+			end
 		end
 		@publisher.connect("localhost", 1883, 1000)
-		[ split_message ]
-	end
-
-	private
-	def channel
-		@channel
+		messages_to_distribute
 	end
 end

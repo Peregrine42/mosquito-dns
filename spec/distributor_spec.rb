@@ -7,13 +7,19 @@ describe Distributor do
 
 	it 'can post to a message queue' do
 		mos = DummyMosquitto.new
-		dist = Distributor.new channel: 'foo', mosquitto: mos
+		dist = Distributor.new mosquitto: mos
 		posted_messages = dist.post({
 			'dns-lookups' => {
 				'baz' => 'bar'
+			},
+			'foo-lookups' => {
+				'something' => 'cool'
 			}
 		}.to_json)
-		expect(posted_messages).to eq [ {'baz' => 'bar' }.to_json ]
+		expect(posted_messages).to match_array [
+			{'baz' => 'bar' }.to_json,
+			{'something' => 'cool' }.to_json
+		]
 	end
 
 end
