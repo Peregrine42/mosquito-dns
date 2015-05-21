@@ -1,19 +1,26 @@
+require 'thread'
+
 class MessageBuffer
 	def initialize
 		@received = []
+		@semaphore = Mutex.new
 	end
 
 	def on_message message
-		@received << message
+		@semaphore.synchronize { @received << message }
 	end
 
 	def pop_all
-		result = @received
-		@received = []
-		result
+		@semaphore.synchronize {
+			result = @received
+			@received = []
+			result
+		}
 	end
 
 	def peek
-		@received
+		@semaphore.synchronize {
+			@received
+		}
 	end
 end

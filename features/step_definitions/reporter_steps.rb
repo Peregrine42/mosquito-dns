@@ -12,7 +12,8 @@ Given /the reporter is pointed at (\S+)/ do |target_uri|
 	stub_request(:any, target_uri)
 	@reporter = Reporter.new(
 	  policies: [ DNSPolicy.new ],
-		target_uri: target_uri)
+		target_uri: target_uri
+	)
 	@reporter.listen
 end
 

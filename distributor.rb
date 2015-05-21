@@ -10,14 +10,12 @@ class Distributor
 	def post message
 		@publisher.loop_start
 		hash = JSON.parse(message)
-		puts hash
 		messages_to_distribute = hash.map do |label, content|
 			content.to_json
 		end
 		@publisher.on_connect do |rc|
 			messages_to_distribute.zip(hash.keys).each do |content, label|
 				channel = "#{label}-config"
-				puts 'publishing ' + content + ' on channel ' + channel
 				@publisher.publish(nil, channel, content, Mosquitto::EXACTLY_ONCE, false)
 			end
 		end
